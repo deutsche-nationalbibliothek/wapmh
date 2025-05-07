@@ -1,0 +1,27 @@
+[project]
+name = "wapmh"
+version = "0.1.0"
+description = "Webarchive Public Metadata Harvesting"
+authors = [
+    {name = "Natanael Arndt",email = "n.arndt@dnb.de"}
+]
+license = "GPLv3+"
+readme = "README.md"
+requires-python = ">=3.13,<4.0"
+dependencies = [
+  "uvicorn (>=0.34.0,<0.35.0)",
+  "fastapi (>=0.115.4,<0.116)",
+  "loguru (>=0.7.3,<0.8.0)",
+  "fastapi-xml (>=1.1.1,<2.0.0)",
+  "stringcase (>=1.2.0,<2.0.0)",
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+fastapi = {extras = ["standard"], version = "^0.115.8"}
+ruff = "^0.9.6"
+pytest = "^8.3.5"
+pytest-cov = "^6.1.1"
