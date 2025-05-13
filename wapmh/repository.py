@@ -6,6 +6,7 @@ from stringcase import snakecase
 from .model.oai_pmh import *
 from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import DC
+import dataclasses
 
 app = FastAPI()
 
@@ -34,7 +35,9 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
         query_params = dict(request.query_params)
         if "metadataPrefix" not in query_params:
             query_params["metadataPrefix"] = "oai_dc"
-        return XmlAppResponse(globals()[snakecase(verb)](**query_params))
+        return XmlAppResponse(
+            globals()[snakecase(verb)](**query_params, request=request)
+        )
     else:
         # todo return proper http code and an xml body
         return {"error": "Invalid verb"}
@@ -42,12 +45,13 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
 
 def list_records(metadataPrefix: str, **kwargs):
     return OaiPmh(
+        **oaiPmhBoilerplate(kwargs["request"]),
         list_records=ListRecordsType(
             record=[
                 get_record_type(rec, metadataPrefix)
                 for rec in metadata_store["records"]
             ]
-        )
+        ),
     )
 
 
@@ -64,14 +68,30 @@ def get_record(metadataPrefix: str, identifier: str, **kwargs) -> dict:
     for rec in metadata_store["records"]:
         if rec["id"] == identifier:
             return OaiPmh(
-                get_record=GetRecordType(record=get_record_type(rec, metadataPrefix))
+                **oaiPmhBoilerplate(kwargs["request"]),
+                get_record=GetRecordType(record=get_record_type(rec, metadataPrefix)),
             )
 
     return OaiPmh(
+        **oaiPmhBoilerplate(kwargs["request"]),
         error=OaiPmherrorType(
             value="Record not found", code=OaiPmherrorcodeType.ID_DOES_NOT_EXIST
-        )
+        ),
     )
+
+
+def oaiPmhBoilerplate(request):
+    return {
+        "response_date": XmlDateTime.now(),
+        "request": RequestType(
+            **{
+                key: request.query_params[key]
+                for key in request.query_params
+                if key in [f.name for f in dataclasses.fields(RequestType)]
+            },
+            value=str(request.base_url),
+        ),
+    }
 
 
 if __name__ == "__main__":
