@@ -31,7 +31,7 @@ class OAI_PMH:
 class EX:
     bla: str
 
-@app.get("/oai_pmh", response_class=XmlAppResponse)
+@app.get("/", response_class=XmlAppResponse)
 async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
     if verb in ["Identify", "ListMetadataFormats", "GetRecord", "ListSets", "ListIdentifiers", "ListRecords"]:
         logger.debug(globals())
@@ -42,8 +42,12 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
 
 def list_records(metadataPrefix: str, **kwargs) -> dict:
     root = ET.Element("OAI-PMH")
-    metadata = ET.SubElement(root, "metadataSet")
-    records = ET.SubElement(metadata, "records")
+    metadataSet = ET.SubElement(root, "metadataSet")
+    records = ET.SubElement(metadataSet, "records")
+    record = ET.SubElement(records, "record")
+    header = ET.SubElement(record, "header")
+    metadata = ET.SubElement(record, "metadata")
+    about = ET.SubElement(record, "about")
 
     logger.debug(root)
     logger.debug(metadata)
