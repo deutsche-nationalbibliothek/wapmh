@@ -1,11 +1,14 @@
 from fastapi import FastAPI, Response, Request
 from dataclasses import dataclass, field
 from fastapi_xml import XmlAppResponse
-import xml.etree.ElementTree as ET
+import fastapi_xml.response
 from loguru import logger
 from stringcase import snakecase
+from .model.oai_pmh import *
 
 app = FastAPI()
+
+fastapi_xml.response.NS_MAP = {None: "http://www.openarchives.org/OAI/2.0/"}
 
 # Sample metadata store (you would replace this with your actual database or storage)
 metadata_store = {
@@ -14,26 +17,6 @@ metadata_store = {
         {"id": "record2", "title": "Record 2"},
     ]
 }
-
-
-@dataclass
-class Record:
-    record: dict[str, str]
-
-
-@dataclass
-class MetadataSet:
-    records: list[Record]
-
-
-@dataclass
-class OAI_PMH:
-    metadataSet: MetadataSet
-
-
-@dataclass
-class EX:
-    bla: str
 
 
 @app.get("/", response_class=XmlAppResponse)
@@ -47,32 +30,26 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
         "ListRecords",
     ]:
         logger.debug(globals())
-        return XmlAppResponse(globals()[snakecase(verb)](**request.query_params))
+        query_params = dict(request.query_params)
+        if "metadataPrefix" not in query_params:
+            query_params["metadataPrefix"] = "oai_dc"
+        return XmlAppResponse(globals()[snakecase(verb)](**query_params))
     else:
         # todo return proper http code and an xml body
         return {"error": "Invalid verb"}
 
 
 def list_records(metadataPrefix: str, **kwargs) -> dict:
-    root = ET.Element("OAI-PMH")
-    metadataSet = ET.SubElement(root, "metadataSet")
-    records = ET.SubElement(metadataSet, "records")
-    record = ET.SubElement(records, "record")
-    header = ET.SubElement(record, "header")
-    metadata = ET.SubElement(record, "metadata")
-    about = ET.SubElement(record, "about")
-
-    logger.debug(root)
-    logger.debug(metadata)
-    logger.debug(records)
+    # logger.debug(metadata)
+    # logger.debug(records)
 
     for record in metadata_store["records"]:
         logger.debug(record)
-        rec = ET.SubElement(records, "record", {"identifier": record["id"]})
-        title = ET.SubElement(rec, "title").text = record["title"]
+        rec = RecordType(header=HeaderType(identifier=record["id"]))
+        # title = ET.SubElement(rec, "title").text = record["title"]
 
     # return EX(bla="hallo")
-    return OAI_PMH(metadataSet="hallo")
+    return OaiPmh()
 
 
 def get_record(metadataPrefix: str, identifier: str, **kwargs) -> dict:
@@ -84,8 +61,13 @@ def get_record(metadataPrefix: str, identifier: str, **kwargs) -> dict:
                 "metadataSet": ET.SubElement(__root__, "metadataSet"),
                 "record": ET.SubElement(metadata, "record", {"identifier": identifier}),
             }
+            return OaiPmh()
 
-    return {"error": "Record not found"}
+    return OaiPmh(
+        error=OaiPmherrorType(
+            value="Record not found", code=OaiPmherrorcodeType.ID_DOES_NOT_EXIST
+        )
+    )
 
 
 if __name__ == "__main__":
