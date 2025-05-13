@@ -11,34 +11,47 @@ app = FastAPI()
 metadata_store = {
     "records": [
         {"id": "record1", "title": "Record 1"},
-        {"id": "record2", "title": "Record 2"}
+        {"id": "record2", "title": "Record 2"},
     ]
 }
+
 
 @dataclass
 class Record:
     record: dict[str, str]
 
+
 @dataclass
 class MetadataSet:
     records: list[Record]
+
 
 @dataclass
 class OAI_PMH:
     metadataSet: MetadataSet
 
+
 @dataclass
 class EX:
     bla: str
 
+
 @app.get("/", response_class=XmlAppResponse)
 async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
-    if verb in ["Identify", "ListMetadataFormats", "GetRecord", "ListSets", "ListIdentifiers", "ListRecords"]:
+    if verb in [
+        "Identify",
+        "ListMetadataFormats",
+        "GetRecord",
+        "ListSets",
+        "ListIdentifiers",
+        "ListRecords",
+    ]:
         logger.debug(globals())
         return XmlAppResponse(globals()[snakecase(verb)](**request.query_params))
     else:
         # todo return proper http code and an xml body
         return {"error": "Invalid verb"}
+
 
 def list_records(metadataPrefix: str, **kwargs) -> dict:
     root = ET.Element("OAI-PMH")
@@ -61,6 +74,7 @@ def list_records(metadataPrefix: str, **kwargs) -> dict:
     # return EX(bla="hallo")
     return OAI_PMH(metadataSet="hallo")
 
+
 def get_record(metadataPrefix: str, identifier: str, **kwargs) -> dict:
     for rec in metadata_store["records"]:
         if rec["id"] == identifier:
@@ -68,11 +82,13 @@ def get_record(metadataPrefix: str, identifier: str, **kwargs) -> dict:
             return {
                 "__root__": ET.Element("OAI-PMH"),
                 "metadataSet": ET.SubElement(__root__, "metadataSet"),
-                "record": ET.SubElement(metadata, "record", {"identifier": identifier})
+                "record": ET.SubElement(metadata, "record", {"identifier": identifier}),
             }
 
     return {"error": "Record not found"}
 
+
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)
