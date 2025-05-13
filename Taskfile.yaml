@@ -1,0 +1,18 @@
+version: "3"
+
+tasks:
+  default:
+    desc: List the available tasks
+    cmds:
+      - task -l
+
+  model:
+    desc: Generate the dataclasses from the OAI-PMH XML Schema (XSD)
+    cmds:
+      - curl -O https://www.openarchives.org/OAI/2.0/OAI-PMH.xsd
+      - poetry run xsdata generate OAI-PMH.xsd --package wapmh.model
+
+  serve:
+    desc: Run the OAI-PMH Repository in a development server
+    cmds:
+      - poetry run python -m wapmh.repository
