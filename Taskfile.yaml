@@ -15,4 +15,4 @@ tasks:
   serve:
     desc: Run the OAI-PMH Repository in a development server
     cmds:
-      - poetry run python -m wapmh.repository
+      - poetry run fastapi dev wapmh/repository.py
