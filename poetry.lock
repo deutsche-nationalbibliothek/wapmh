@@ -843,6 +843,21 @@ files = [
 windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
+name = "pyparsing"
+version = "3.2.3"
+description = "pyparsing module - Classes and methods to define and execute parsing grammars"
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "pyparsing-3.2.3-py3-none-any.whl", hash = "sha256:a749938e02d6fd0b59b356ca504a24982314bb090c383e3cf201c95ef7e2bfcf"},
+    {file = "pyparsing-3.2.3.tar.gz", hash = "sha256:b9c13f1ab8b3b542f72e28f634bad4de758ab3ce4546e4301970ad6fa77c38be"},
+]
+
+[package.extras]
+diagrams = ["jinja2", "railroad-diagrams"]
+
+[[package]]
 name = "pytest"
 version = "8.3.5"
 description = "pytest: simple powerful testing with Python"
@@ -971,6 +986,28 @@ files = [
     {file = "PyYAML-6.0.2-cp39-cp39-win_amd64.whl", hash = "sha256:39693e1f8320ae4f43943590b49779ffb98acb81f788220ea932a6b6c51004d8"},
     {file = "pyyaml-6.0.2.tar.gz", hash = "sha256:d584d9ec91ad65861cc08d42e834324ef890a082e591037abe114850ff7bbc3e"},
 ]
+
+[[package]]
+name = "rdflib"
+version = "7.1.4"
+description = "RDFLib is a Python library for working with RDF, a simple yet powerful language for representing information."
+optional = false
+python-versions = "<4.0.0,>=3.8.1"
+groups = ["main"]
+files = [
+    {file = "rdflib-7.1.4-py3-none-any.whl", hash = "sha256:72f4adb1990fa5241abd22ddaf36d7cafa5d91d9ff2ba13f3086d339b213d997"},
+    {file = "rdflib-7.1.4.tar.gz", hash = "sha256:fed46e24f26a788e2ab8e445f7077f00edcf95abb73bcef4b86cefa8b62dd174"},
+]
+
+[package.dependencies]
+pyparsing = ">=2.1.0,<4"
+
+[package.extras]
+berkeleydb = ["berkeleydb (>=18.1.0,<19.0.0)"]
+html = ["html5rdf (>=1.2,<2)"]
+lxml = ["lxml (>=4.3,<6.0)"]
+networkx = ["networkx (>=2,<4)"]
+orjson = ["orjson (>=3.9.14,<4)"]
 
 [[package]]
 name = "rich"
@@ -1431,4 +1468,4 @@ test = ["pre-commit", "pytest", "pytest-benchmark", "pytest-cov"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<4.0"
-content-hash = "d9bb2f171dd0edb77ea2baf02a4911df30d9e1beb843d9bc556ab27e39751eda"
+content-hash = "d6f110fabb05ecb9cfef3c72746cef07d011a56899d529d9233aae544d627081"
