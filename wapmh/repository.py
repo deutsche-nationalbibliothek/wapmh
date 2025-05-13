@@ -1,10 +1,11 @@
-from fastapi import FastAPI, Response, Request
-from dataclasses import dataclass, field
+from fastapi import FastAPI, Request
 from fastapi_xml import XmlAppResponse
 import fastapi_xml.response
 from loguru import logger
 from stringcase import snakecase
 from .model.oai_pmh import *
+from rdflib import Graph, URIRef, Literal
+from rdflib.namespace import DC
 
 app = FastAPI()
 
@@ -39,29 +40,32 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
         return {"error": "Invalid verb"}
 
 
-def list_records(metadataPrefix: str, **kwargs) -> dict:
-    # logger.debug(metadata)
-    # logger.debug(records)
+def list_records(metadataPrefix: str, **kwargs):
+    return OaiPmh(
+        list_records=ListRecordsType(
+            record=[
+                get_record_type(rec, metadataPrefix)
+                for rec in metadata_store["records"]
+            ]
+        )
+    )
 
-    for record in metadata_store["records"]:
-        logger.debug(record)
-        rec = RecordType(header=HeaderType(identifier=record["id"]))
-        # title = ET.SubElement(rec, "title").text = record["title"]
 
-    # return EX(bla="hallo")
-    return OaiPmh()
+def get_record_type(rec, metadataPrefix):
+    g = Graph()
+    g.add((URIRef(f"urn:id:{rec['id']}"), DC.title, Literal(rec["title"])))
+    return RecordType(
+        header=HeaderType(identifier=rec["id"]),
+        metadata=MetadataType(g.serialize(format="application/rdf+xml")),
+    )
 
 
 def get_record(metadataPrefix: str, identifier: str, **kwargs) -> dict:
     for rec in metadata_store["records"]:
         if rec["id"] == identifier:
-            title = ET.SubElement(ET.Element("record"), "title").text = rec["title"]
-            return {
-                "__root__": ET.Element("OAI-PMH"),
-                "metadataSet": ET.SubElement(__root__, "metadataSet"),
-                "record": ET.SubElement(metadata, "record", {"identifier": identifier}),
-            }
-            return OaiPmh()
+            return OaiPmh(
+                get_record=GetRecordType(record=get_record_type(rec, metadataPrefix))
+            )
 
     return OaiPmh(
         error=OaiPmherrorType(
