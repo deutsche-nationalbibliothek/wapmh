@@ -24,35 +24,108 @@ metadata_store = {
 @app.get("/", response_class=XmlAppResponse)
 async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
     if verb in [
-        "Identify",
-        "ListMetadataFormats",
         "GetRecord",
-        "ListSets",
+        "Identify",
         "ListIdentifiers",
+        "ListMetadataFormats",
         "ListRecords",
+        "ListSets",
     ]:
         logger.debug(globals())
         query_params = dict(request.query_params)
         if "metadataPrefix" not in query_params:
             query_params["metadataPrefix"] = "oai_dc"
         return XmlAppResponse(
-            globals()[snakecase(verb)](**query_params, request=request)
+            OaiPmh(
+                response_date=XmlDateTime.now(),
+                request=RequestType(
+                    **{
+                        key: request.query_params[key]
+                        for key in request.query_params
+                        if key in [f.name for f in dataclasses.fields(RequestType)]
+                    },
+                    value=str(request.base_url),
+                ),
+                **globals()[snakecase(verb)](**query_params),
+            )
         )
     else:
         # todo return proper http code and an xml body
         return {"error": "Invalid verb"}
 
 
-def list_records(metadataPrefix: str, **kwargs):
-    return OaiPmh(
-        **oaiPmhBoilerplate(kwargs["request"]),
-        list_records=ListRecordsType(
+def get_record(metadataPrefix: str, identifier: str, **kwargs) -> dict:
+    """verb"""
+    for rec in metadata_store["records"]:
+        if rec["id"] == identifier:
+            return {
+                "get_record": GetRecordType(record=get_record_type(rec, metadataPrefix))
+            }
+
+    return {
+        "error": OaiPmherrorType(
+            value="Record not found", code=OaiPmherrorcodeType.ID_DOES_NOT_EXIST
+        )
+    }
+
+
+def identify(**kwargs) -> dict:
+    """verb"""
+    return {
+        "identify": IdentifyType(
+            repository_name="",
+            base_url="",
+            protocol_version="2.0",
+            admin_email=[""],
+            earliest_datestamp="",
+            deleted_record="",
+            granularity="",
+            compression=[""],
+            description=[DescriptionType("My Description")],
+        )
+    }
+
+
+def list_identifiers(
+    metadataPrefix: str,
+    **kwargs,
+) -> dict:
+    """verb"""
+    return {
+        "list_identifiers": ListIdentifiersType(
+            header=[HeaderType()], resumption_token=ResumptionTokenType()
+        )
+    }
+
+
+def list_metadata_formats(identifier: str = None, **kwargs) -> dict:
+    """verb"""
+    return {
+        "list_metadata_formats": ListMetadataFormatsType(
+            metadata_format=[MetadataFormatType()]
+        )
+    }
+
+
+def list_records(metadataPrefix: str, **kwargs) -> dict:
+    """verb"""
+    return {
+        "list_records": ListRecordsType(
             record=[
                 get_record_type(rec, metadataPrefix)
                 for rec in metadata_store["records"]
             ]
-        ),
-    )
+        )
+    }
+
+
+def list_sets(**kwargs) -> dict:
+    """verb"""
+    return {
+        "list_sets": ListSetsType(
+            set=[SetType()], resumption_token=ResumptionTokenType()
+        )
+    }
 
 
 def get_record_type(rec, metadataPrefix):
@@ -62,36 +135,6 @@ def get_record_type(rec, metadataPrefix):
         header=HeaderType(identifier=rec["id"]),
         metadata=MetadataType(g.serialize(format="application/rdf+xml")),
     )
-
-
-def get_record(metadataPrefix: str, identifier: str, **kwargs) -> dict:
-    for rec in metadata_store["records"]:
-        if rec["id"] == identifier:
-            return OaiPmh(
-                **oaiPmhBoilerplate(kwargs["request"]),
-                get_record=GetRecordType(record=get_record_type(rec, metadataPrefix)),
-            )
-
-    return OaiPmh(
-        **oaiPmhBoilerplate(kwargs["request"]),
-        error=OaiPmherrorType(
-            value="Record not found", code=OaiPmherrorcodeType.ID_DOES_NOT_EXIST
-        ),
-    )
-
-
-def oaiPmhBoilerplate(request):
-    return {
-        "response_date": XmlDateTime.now(),
-        "request": RequestType(
-            **{
-                key: request.query_params[key]
-                for key in request.query_params
-                if key in [f.name for f in dataclasses.fields(RequestType)]
-            },
-            value=str(request.base_url),
-        ),
-    }
 
 
 if __name__ == "__main__":
