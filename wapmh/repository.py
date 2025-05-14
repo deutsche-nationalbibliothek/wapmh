@@ -31,7 +31,6 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
         "ListRecords",
         "ListSets",
     ]:
-        logger.debug(globals())
         query_params = dict(request.query_params)
         if "metadataPrefix" not in query_params:
             query_params["metadataPrefix"] = "oai_dc"
