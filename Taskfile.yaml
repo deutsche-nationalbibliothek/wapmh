@@ -16,3 +16,10 @@ tasks:
     desc: Run the OAI-PMH Repository in a development server
     cmds:
       - poetry run fastapi dev wapmh/repository.py
+
+  test:
+    desc: Run the pytest tests
+    env:
+      PYTHONPATH: .
+    cmds:
+      - poetry run pytest

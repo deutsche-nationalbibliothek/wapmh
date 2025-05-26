@@ -1,11 +1,10 @@
-from oaipmh.server import ServerBase
-from oaipmh.metadata import MetadataRegistry
+from wapmh.repository import app
+from fastapi.testclient import TestClient
 
 
-def test_simple_request():
-    registry = MetadataRegistry()
-    # xmlserver = XMLTreeServer()
-    server = ServerBase(xmlserver, registry)
+client = TestClient(app)
 
-    request = {"verb": "listSets"}
-    server.handleRequest(request)
+
+def test_list_records():
+    response = client.get("/", params={"verb": "ListRecords"})
+    assert response.status_code == 200
