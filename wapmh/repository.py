@@ -8,6 +8,7 @@ from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import DC
 import dataclasses
 from xsdata.formats.dataclass.parsers import XmlParser
+from xml.etree.ElementTree import fromstring as ETfromstring
 
 app = FastAPI()
 
@@ -131,18 +132,13 @@ def list_sets(**kwargs) -> dict:
 def get_record_type(rec, metadataPrefix):
     g = Graph()
     g.add((URIRef(f"urn:id:{rec['id']}"), DC.title, Literal(rec["title"])))
-    rdf_data = g.serialize(format="application/rdf+xml").splitlines()
-    metadata_string = f"""{rdf_data[0]}
-        <metadata>
-        {"\n".join(rdf_data[1:])}
-        </metadata>
-        """
-    logger.debug(metadata_string)
-    fastapi_xml.response.NS_MAP |= g.namespaces()
-    metadata = XmlParser().from_string(metadata_string, MetadataType)
+    rdf_string = g.serialize(format="application/rdf+xml")
+    rdf_elements = ETfromstring(rdf_string)
     return RecordType(
         header=HeaderType(identifier=rec["id"]),
-        metadata=metadata,
+        metadata=MetadataType(
+            other_element=rdf_elements
+        ),
     )
 
 
