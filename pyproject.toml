@@ -16,6 +16,7 @@ dependencies = [
   "stringcase (>=1.2.0,<2.0.0)",
   "rdflib (>=7.1.4,<8.0.0)",
   "xsdata @ git+https://github.com/white-gecko/xsdata.git@injectElementTree",
+  "dcxml (>=0.1.2,<0.2.0)",
 ]
 
 [build-system]
