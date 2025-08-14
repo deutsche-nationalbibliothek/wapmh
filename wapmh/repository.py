@@ -22,9 +22,12 @@ metadata_store = {
     ]
 }
 
-
 @app.get("/", response_class=XmlAppResponse)
 async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
+    """The OAI-PMH interface method.
+
+    See also: https://www.openarchives.org/OAI/openarchivesprotocol.html
+    """
     if verb in [
         "GetRecord",
         "Identify",
@@ -56,7 +59,7 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
 
 
 def get_record(metadataPrefix: str, identifier: str, **kwargs) -> dict:
-    """verb"""
+    """Implements the GetRecord verb."""
     for rec in metadata_store["records"]:
         if rec["id"] == identifier:
             return {
@@ -71,7 +74,7 @@ def get_record(metadataPrefix: str, identifier: str, **kwargs) -> dict:
 
 
 def identify(**kwargs) -> dict:
-    """verb"""
+    """Implements the Identify verb."""
     return {
         "identify": IdentifyType(
             repository_name="",
@@ -91,7 +94,7 @@ def list_identifiers(
     metadataPrefix: str,
     **kwargs,
 ) -> dict:
-    """verb"""
+    """Implements the ListIdentifiers verb."""
     return {
         "list_identifiers": ListIdentifiersType(
             header=[HeaderType()], resumption_token=ResumptionTokenType()
@@ -100,7 +103,7 @@ def list_identifiers(
 
 
 def list_metadata_formats(identifier: str = None, **kwargs) -> dict:
-    """verb"""
+    """Implements the ListMetadataFormats verb."""
     return {
         "list_metadata_formats": ListMetadataFormatsType(
             metadata_format=[MetadataFormatType()]
@@ -109,7 +112,7 @@ def list_metadata_formats(identifier: str = None, **kwargs) -> dict:
 
 
 def list_records(metadataPrefix: str, **kwargs) -> dict:
-    """verb"""
+    """Implements the ListRecords verb."""
     return {
         "list_records": ListRecordsType(
             record=[
@@ -121,7 +124,7 @@ def list_records(metadataPrefix: str, **kwargs) -> dict:
 
 
 def list_sets(**kwargs) -> dict:
-    """verb"""
+    """Implements the ListSets verb."""
     return {
         "list_sets": ListSetsType(
             set=[SetType()], resumption_token=ResumptionTokenType()
@@ -129,7 +132,8 @@ def list_sets(**kwargs) -> dict:
     }
 
 
-def get_record_type(rec, metadataPrefix):
+def get_record_type(rec, metadataPrefix) -> RecordType:
+    """Get a record according to the metadataPrefix."""
     g = Graph()
     g.add((URIRef(f"urn:id:{rec['id']}"), DC.title, Literal(rec["title"])))
     rdf_string = g.serialize(format="application/rdf+xml")
