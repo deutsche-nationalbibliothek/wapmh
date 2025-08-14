@@ -1,13 +1,11 @@
 from fastapi import FastAPI, Request
 from fastapi_xml import XmlAppResponse
 import fastapi_xml.response
-from loguru import logger
 from stringcase import snakecase
 from .model.oai_pmh import *
 from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import DC
 import dataclasses
-from xsdata.formats.dataclass.parsers import XmlParser
 from xml.etree.ElementTree import fromstring as ETfromstring
 
 app = FastAPI()
