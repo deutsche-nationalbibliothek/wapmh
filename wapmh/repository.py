@@ -6,19 +6,40 @@ from .model.oai_pmh import *
 from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import DC
 import dataclasses
-from xml.etree.ElementTree import fromstring as ETfromstring
+from xsdata.formats.dataclass.etree import etree
+from loguru import logger
 
 app = FastAPI()
 
 fastapi_xml.response.NS_MAP = {None: "http://www.openarchives.org/OAI/2.0/"}
 
-# Sample metadata store (you would replace this with your actual database or storage)
-metadata_store = {
-    "records": [
-        {"id": "record1", "title": "Record 1"},
-        {"id": "record2", "title": "Record 2"},
+
+class MetadataStore:
+    # Sample metadata store (you would replace this with your actual database or storage)
+    metadata_store = [
+        {"id": "record1", "title": "Record 1", "date": "2025-08-14"},
+        {"id": "record2", "title": "Record 2", "date": "2025-08-10"},
     ]
-}
+
+    def records(self, **kwargs):
+        identifier = kwargs.get("identifier")
+        from_ = kwargs.get("from")
+        until = kwargs.get("until")
+        set_ = kwargs.get("set")
+        for rec in self.metadata_store:
+            if from_ and rec["date"] < from_:
+                continue
+            if until and rec["date"] > until:
+                continue
+            if identifier:
+                if rec["id"] == identifier:
+                    yield rec
+                    return
+            else:
+                yield rec
+
+
+metadata_store = MetadataStore()
 
 
 @app.get("/", response_class=XmlAppResponse)
@@ -59,11 +80,10 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
 
 def get_record(metadataPrefix: str, identifier: str, **kwargs) -> dict:
     """Implements the GetRecord verb."""
-    for rec in metadata_store["records"]:
-        if rec["id"] == identifier:
-            return {
-                "get_record": GetRecordType(record=get_record_type(rec, metadataPrefix))
-            }
+    for rec in metadata_store.records(identifier=identifier):
+        return {
+            "get_record": GetRecordType(record=get_record_type(rec, metadataPrefix))
+        }
 
     return {
         "error": OaiPmherrorType(
@@ -97,7 +117,8 @@ def list_identifiers(
     return {
         "list_identifiers": ListIdentifiersType(
             header=[
-                HeaderType(identifier=rec["id"]) for rec in metadata_store["records"]
+                HeaderType(identifier=rec["id"], datestamp=rec["date"], set_spec=[])
+                for rec in metadata_store.records(**kwargs)
             ],
             resumption_token=ResumptionTokenType(),
         )
@@ -119,7 +140,7 @@ def list_records(metadataPrefix: str, **kwargs) -> dict:
         "list_records": ListRecordsType(
             record=[
                 get_record_type(rec, metadataPrefix)
-                for rec in metadata_store["records"]
+                for rec in metadata_store.records(**kwargs)
             ]
         )
     }
@@ -138,10 +159,11 @@ def get_record_type(rec, metadataPrefix) -> RecordType:
     """Get a record according to the metadataPrefix."""
     g = Graph()
     g.add((URIRef(f"urn:id:{rec['id']}"), DC.title, Literal(rec["title"])))
-    rdf_string = g.serialize(format="application/rdf+xml")
-    rdf_elements = ETfromstring(rdf_string)
+    rdf_string = g.serialize(format="application/rdf+xml", encoding="utf-8")
+    rdf_elements = etree.fromstring(rdf_string)
+    logger.debug(rdf_elements)
     return RecordType(
-        header=HeaderType(identifier=rec["id"]),
+        header=HeaderType(identifier=rec["id"], datestamp=rec["date"], set_spec=[]),
         metadata=MetadataType(other_element=rdf_elements),
     )
 
