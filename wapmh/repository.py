@@ -20,6 +20,7 @@ metadata_store = {
     ]
 }
 
+
 @app.get("/", response_class=XmlAppResponse)
 async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
     """The OAI-PMH interface method.
@@ -141,9 +142,7 @@ def get_record_type(rec, metadataPrefix) -> RecordType:
     rdf_elements = ETfromstring(rdf_string)
     return RecordType(
         header=HeaderType(identifier=rec["id"]),
-        metadata=MetadataType(
-            other_element=rdf_elements
-        ),
+        metadata=MetadataType(other_element=rdf_elements),
     )
 
 
