@@ -95,7 +95,10 @@ def list_identifiers(
     """Implements the ListIdentifiers verb."""
     return {
         "list_identifiers": ListIdentifiersType(
-            header=[HeaderType()], resumption_token=ResumptionTokenType()
+            header=[
+                HeaderType(identifier=rec["id"]) for rec in metadata_store["records"]
+            ],
+            resumption_token=ResumptionTokenType(),
         )
     }
 
