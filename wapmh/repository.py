@@ -1,45 +1,48 @@
-from fastapi import FastAPI, Request
-from fastapi_xml import XmlAppResponse
-import fastapi_xml.response
-from stringcase import snakecase
-from .model.oai_pmh import *
-from rdflib import Graph, URIRef, Literal
-from rdflib.namespace import DC
 import dataclasses
+from functools import lru_cache
+
+import fastapi_xml.response
+from fastapi import Depends, FastAPI, Request
+from fastapi_xml import XmlAppResponse
+from stringcase import snakecase
+from typing_extensions import Annotated
 from xsdata.formats.dataclass.etree import etree
-from loguru import logger
+from xsdata.models.datatype import XmlDateTime
+
+from . import config
+from .model.oai_pmh import (
+    DescriptionType,
+    GetRecordType,
+    HeaderType,
+    IdentifyType,
+    ListIdentifiersType,
+    ListMetadataFormatsType,
+    ListRecordsType,
+    ListSetsType,
+    MetadataFormatType,
+    MetadataType,
+    OaiPmh,
+    OaiPmherrorcodeType,
+    OaiPmherrorType,
+    RecordType,
+    RequestType,
+    ResumptionTokenType,
+    SetType,
+)
+from .store import mocked_sparql_metadata_store
 
 app = FastAPI()
 
+# metadata_store = MockMetadataStore()
+metadata_store = mocked_sparql_metadata_store
+
+# Make sure the OAI namespace is set as default namespace
 fastapi_xml.response.NS_MAP = {None: "http://www.openarchives.org/OAI/2.0/"}
 
 
-class MetadataStore:
-    # Sample metadata store (you would replace this with your actual database or storage)
-    metadata_store = [
-        {"id": "record1", "title": "Record 1", "date": "2025-08-14"},
-        {"id": "record2", "title": "Record 2", "date": "2025-08-10"},
-    ]
-
-    def records(self, **kwargs):
-        identifier = kwargs.get("identifier")
-        from_ = kwargs.get("from")
-        until = kwargs.get("until")
-        set_ = kwargs.get("set")
-        for rec in self.metadata_store:
-            if from_ and rec["date"] < from_:
-                continue
-            if until and rec["date"] > until:
-                continue
-            if identifier:
-                if rec["id"] == identifier:
-                    yield rec
-                    return
-            else:
-                yield rec
-
-
-metadata_store = MetadataStore()
+@lru_cache
+def get_settings():
+    return config.Settings()
 
 
 @app.get("/", response_class=XmlAppResponse)
@@ -94,17 +97,18 @@ def get_record(metadataPrefix: str, identifier: str, **kwargs) -> dict:
 
 def identify(**kwargs) -> dict:
     """Implements the Identify verb."""
+    settings = get_settings()
     return {
         "identify": IdentifyType(
-            repository_name="",
+            repository_name=settings.repository_name,
             base_url="",
             protocol_version="2.0",
-            admin_email=[""],
+            admin_email=settings.admin_emails,
             earliest_datestamp="",
             deleted_record="",
             granularity="",
             compression=[""],
-            description=[DescriptionType("My Description")],
+            description=[DescriptionType(settings.description)],
         )
     }
 
@@ -117,7 +121,11 @@ def list_identifiers(
     return {
         "list_identifiers": ListIdentifiersType(
             header=[
-                HeaderType(identifier=rec["id"], datestamp=rec["date"], set_spec=[])
+                HeaderType(
+                    identifier=rec.get("identifier"),
+                    datestamp=rec.get("datestamp"),
+                    set_spec=[],
+                )
                 for rec in metadata_store.records(**kwargs)
             ],
             resumption_token=ResumptionTokenType(),
@@ -157,13 +165,15 @@ def list_sets(**kwargs) -> dict:
 
 def get_record_type(rec, metadataPrefix) -> RecordType:
     """Get a record according to the metadataPrefix."""
-    g = Graph()
-    g.add((URIRef(f"urn:id:{rec['id']}"), DC.title, Literal(rec["title"])))
+    g = rec.get("metadata")
     rdf_string = g.serialize(format="application/rdf+xml", encoding="utf-8")
     rdf_elements = etree.fromstring(rdf_string)
-    logger.debug(rdf_elements)
     return RecordType(
-        header=HeaderType(identifier=rec["id"], datestamp=rec["date"], set_spec=[]),
+        header=HeaderType(
+            identifier=rec.get("identifier"),
+            datestamp=rec.get("datestamp"),
+            set_spec=[],
+        ),
         metadata=MetadataType(other_element=rdf_elements),
     )
 
