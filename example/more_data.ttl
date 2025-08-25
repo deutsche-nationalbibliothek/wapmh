@@ -1,0 +1,103 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix bibo: <http://purl.org/ontology/bibo/> .
+@prefix lv: <http://purl.org/lobid/lv#> .
+@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdau: <http://rdaregistry.info/Elements/u/> .
+@prefix rdamt: <http://rdaregistry.info/termList/RDAMediaType/> .
+@prefix rdact: <http://rdaregistry.info/termList/RDACarrierType/> .
+@prefix rdaco: <http://rdaregistry.info/termList/RDAContentType/> .
+@prefix wdrs: <http://www.w3.org/2007/05/powder-s#> .
+@prefix gndo: <https://d-nb.info/standards/elementset/gnd#> .
+@prefix gnd: <https://d-nb.info/gnd/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+<https://d-nb.info/104810396X>
+    dc:identifier "(DE-101)104810396X" ;
+    dc:title "Bundesarbeitsgericht" ;
+    dcterms:issued "2012-" ;
+    dcterms:medium <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    rdau:P60048 <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    rdau:P60049 <http://rdaregistry.info/termList/RDAContentType/1020>, <https://d-nb.info/gnd/4067488-5>, <https://d-nb.info/gnd/4596172-4> ;
+    rdau:P60050 <http://rdaregistry.info/termList/RDAMediaType/1003> ;
+    a bibo:Periodical ;
+    owl:sameAs <http://hub.culturegraph.org/resource/DNB-104810396X> ;
+    wdrs:describedby <https://d-nb.info/104810396X/about> ;
+    foaf:isPrimaryTopicOf "http://www.bundesarbeitsgericht.de/" .
+
+<https://d-nb.info/1048103978>
+    dc:identifier "(DE-101)1048103978" ;
+    dcterms:isPartOf <https://d-nb.info/104810396X> ;
+    dcterms:issued "2012" ;
+    dcterms:medium <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    bibo:issue "2012-05-26" ;
+    rdau:P60048 <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    rdau:P60049 <http://rdaregistry.info/termList/RDAContentType/1020> ;
+    rdau:P60050 <http://rdaregistry.info/termList/RDAMediaType/1003> ;
+    owl:sameAs <http://hub.culturegraph.org/resource/DNB-1048103978> ;
+    wdrs:describedby <https://d-nb.info/1048103978/about> .
+
+<https://d-nb.info/1048133427>
+    dc:identifier "(DE-101)1048133427" ;
+    dc:title "Angela Merkel" ;
+    dcterms:issued "2013-" ;
+    dcterms:medium <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    rdau:P60048 <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    rdau:P60049 <http://rdaregistry.info/termList/RDAContentType/1020>, <https://d-nb.info/gnd/4067488-5>, <https://d-nb.info/gnd/4596172-4> ;
+    rdau:P60050 <http://rdaregistry.info/termList/RDAMediaType/1003> ;
+    a bibo:Periodical ;
+    owl:sameAs <http://hub.culturegraph.org/resource/DNB-1048133427> ;
+    wdrs:describedby <https://d-nb.info/1048133427/about> ;
+    foaf:isPrimaryTopicOf "http://www.angela-merkel.de/" .
+
+<https://d-nb.info/1048133435>
+    dc:identifier "(DE-101)1048133435" ;
+    dcterms:isPartOf <https://d-nb.info/1048133427> ;
+    dcterms:issued "2013" ;
+    dcterms:medium <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    bibo:issue "2013-06-06" ;
+    rdau:P60048 <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    rdau:P60049 <http://rdaregistry.info/termList/RDAContentType/1020> ;
+    rdau:P60050 <http://rdaregistry.info/termList/RDAMediaType/1003> ;
+    owl:sameAs <http://hub.culturegraph.org/resource/DNB-1048133435> ;
+    wdrs:describedby <https://d-nb.info/1048133435/about> .
+
+<https://d-nb.info/1048133443>
+    dc:identifier "(DE-101)1048133443" ;
+    dcterms:isPartOf <https://d-nb.info/1048133427> ;
+    dcterms:issued "2013" ;
+    dcterms:medium <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    bibo:issue "2013-07-06" ;
+    rdau:P60048 <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    rdau:P60049 <http://rdaregistry.info/termList/RDAContentType/1020> ;
+    rdau:P60050 <http://rdaregistry.info/termList/RDAMediaType/1003> ;
+    owl:sameAs <http://hub.culturegraph.org/resource/DNB-1048133443> ;
+    wdrs:describedby <https://d-nb.info/1048133443/about> .
+
+<https://d-nb.info/1122195400>
+    dc:identifier "(DE-101)1122195400" ;
+    dc:title "Geflüchtete in Bremen" ;
+    dcterms:issued "2016-" ;
+    dcterms:medium <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    rdau:P60048 <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    rdau:P60049 <http://rdaregistry.info/termList/RDAContentType/1020>, <https://d-nb.info/gnd/4596172-4> ;
+    rdau:P60050 <http://rdaregistry.info/termList/RDAMediaType/1003> ;
+    a bibo:Periodical ;
+    owl:sameAs <http://hub.culturegraph.org/resource/DNB-1122195400> ;
+    wdrs:describedby <https://d-nb.info/1122195400/about> ;
+    foaf:isPrimaryTopicOf "http://www.bremen.de/fluechtlinge" .
+
+<https://d-nb.info/1161214585>
+    dc:identifier "(DE-101)1161214585" ;
+    dcterms:isPartOf <https://d-nb.info/1122195400> ;
+    dcterms:issued "2018" ;
+    dcterms:medium <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    bibo:issue "2018-05-18" ;
+    rdau:P60048 <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    rdau:P60049 <http://rdaregistry.info/termList/RDAContentType/1020>, <https://d-nb.info/gnd/4596172-4> ;
+    rdau:P60050 <http://rdaregistry.info/termList/RDAMediaType/1003> ;
+    owl:sameAs <http://hub.culturegraph.org/resource/DNB-1161214585> ;
+    wdrs:describedby <https://d-nb.info/1161214585/about> .
