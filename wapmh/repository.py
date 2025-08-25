@@ -94,8 +94,13 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
             )
         )
     else:
-        # todo return proper http code and an xml body
-        return {"error": "Invalid verb"}
+        return XmlAppResponse(
+            OaiPmh(
+                error=OaiPmherrorType(
+                    value="Invalid verb", code=OaiPmherrorcodeType.BAD_VERB
+                )
+            )
+        )
 
 
 def get_record(
@@ -151,6 +156,7 @@ def list_identifiers(
             resumption_token=None,
         )
     }
+    # TODO: return an error in case of an empty result
 
 
 def list_metadata_formats(
@@ -174,10 +180,18 @@ def list_records(metadata_store: MetadataStore, metadataPrefix: str, **kwargs) -
             ]
         )
     }
+    # TODO: return an error in case of an empty result
 
 
 def list_sets(metadata_store: MetadataStore, **kwargs) -> dict:
     """Implements the ListSets verb."""
+
+    return {
+        "error": OaiPmherrorType(
+            value="Record not found", code=OaiPmherrorcodeType.NO_SET_HIERARCHY
+        )
+    }
+
     return {
         "list_sets": ListSetsType(
             set=[SetType()], resumption_token=ResumptionTokenType()
