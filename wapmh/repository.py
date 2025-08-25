@@ -5,6 +5,8 @@ from functools import lru_cache
 import fastapi_xml.response
 from fastapi import FastAPI, Request
 from fastapi_xml import XmlAppResponse
+from query_collection import TemplateQueryCollection
+from rdflib import Graph
 from stringcase import snakecase
 from xsdata.formats.dataclass.etree import etree
 from xsdata.models.datatype import XmlDateTime
@@ -29,7 +31,7 @@ from .model.oai_pmh import (
     ResumptionTokenType,
     SetType,
 )
-from .store import MetadataStore, MockSparqlMetadataStore
+from .store import MetadataStore, SparqlMetadataStore
 
 
 @asynccontextmanager
@@ -38,9 +40,11 @@ async def lifespan(app: FastAPI):
     Initialize the Client and add it to request.state
     """
     settings = get_settings()
-    # metadata_store = MockMetadataStore()
-    metadata_store = MockSparqlMetadataStore()
-    # metadata_store = SparqlMetadataStore()
+
+    graph = Graph().parse(source=settings.graph_path, format="turtle")
+    queries = TemplateQueryCollection(initNs=dict(graph.namespaces()))
+    queries.loadFromDirectory(settings.query_path)
+    metadata_store = SparqlMetadataStore(graph=graph, queries=queries)
     yield {"metadata_store": metadata_store}
     """ Run on shutdown
         Close the connection

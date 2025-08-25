@@ -7,5 +7,7 @@ class Settings(BaseSettings):
     admin_emails: Optional[list[str]] = None
 
     sparql_endpoint: str = "http://localhost:5000/query"
+    graph_path: str = ""
+    query_path: str = ""
 
     model_config = SettingsConfigDict(env_file="default.env")
