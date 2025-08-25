@@ -79,17 +79,16 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
         "ListSets",
     ]:
         query_params = dict(request.query_params)
+        request_type_parameters = dict(
+            query_params_to_request_type_parameters(request.query_params)
+        )
         if "metadataPrefix" not in query_params:
             query_params["metadataPrefix"] = "oai_dc"
         return XmlAppResponse(
             OaiPmh(
                 response_date=XmlDateTime.now(),
                 request=RequestType(
-                    **{
-                        key: request.query_params[key]
-                        for key in request.query_params
-                        if key in [f.name for f in dataclasses.fields(RequestType)]
-                    },
+                    **request_type_parameters,
                     value=str(request.base_url),
                 ),
                 **globals()[snakecase(verb)](
@@ -105,6 +104,17 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
                 )
             )
         )
+
+
+def query_params_to_request_type_parameters(query_params):
+    """This helper method is required to translate some field names that are reserved words in python.
+    Those words hold the parameter name in the metadate field 'name'."""
+    fields = {
+        f.metadata.get("name") or f.name: f for f in dataclasses.fields(RequestType)
+    }
+    for key in query_params:
+        if key in fields:
+            yield fields[key].name, query_params[key]
 
 
 def get_record(
