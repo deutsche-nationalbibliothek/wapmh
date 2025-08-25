@@ -35,11 +35,11 @@ class MockMetadataStore(MetadataStore):
 
     def _records(self, **kwargs):
         identifier = kwargs.get("identifier")
-        from_ = kwargs.get("from")
+        from_value = kwargs.get("from")
         until = kwargs.get("until")
-        set_ = kwargs.get("set")
+        set_value = kwargs.get("set")
         for rec in self.metadata_store:
-            if from_ and rec["datestamp"] < from_:
+            if from_value and rec["datestamp"] < from_value:
                 continue
             if until and rec["datestamp"] > until:
                 continue
@@ -63,19 +63,19 @@ class SparqlMetadataStore(MetadataStore):
 
     def records(self, **kwargs):
         identifier = kwargs.get("identifier")
-        from_ = kwargs.get("from")
+        from_value = kwargs.get("from")
         until = kwargs.get("until")
-        set_ = kwargs.get("set")
+        set_value = kwargs.get("set")
 
         headersSelect = None
         if identifier:
             headersSelect = self.queries.get("identifiedHeaderSelect").p(
                 identifier=Literal(identifier)
             )
-        elif from_ or until:
+        elif from_value or until:
             dateRange = {}
-            if from_:
-                dateRange["from"] = Literal(from_)
+            if from_value:
+                dateRange["from"] = Literal(from_value)
             if until:
                 dateRange["until"] = Literal(until)
             headersSelect = self.queries.get("dateRangeHeadersSelect").p(**dateRange)
