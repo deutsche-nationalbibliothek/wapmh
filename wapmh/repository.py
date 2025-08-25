@@ -128,7 +128,7 @@ def list_identifiers(
                 )
                 for rec in metadata_store.records(**kwargs)
             ],
-            resumption_token=ResumptionTokenType(),
+            resumption_token=None,
         )
     }
 
