@@ -1,11 +1,11 @@
 import dataclasses
+from contextlib import asynccontextmanager
 from functools import lru_cache
 
 import fastapi_xml.response
-from fastapi import Depends, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi_xml import XmlAppResponse
 from stringcase import snakecase
-from typing_extensions import Annotated
 from xsdata.formats.dataclass.etree import etree
 from xsdata.models.datatype import XmlDateTime
 
@@ -29,12 +29,27 @@ from .model.oai_pmh import (
     ResumptionTokenType,
     SetType,
 )
-from .store import MockSparqlMetadataStore
+from .store import MetadataStore, MockSparqlMetadataStore
 
-app = FastAPI()
 
-# metadata_store = MockMetadataStore()
-metadata_store = MockSparqlMetadataStore()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Run at startup
+    Initialize the Client and add it to request.state
+    """
+    settings = get_settings()
+    # metadata_store = MockMetadataStore()
+    metadata_store = MockSparqlMetadataStore()
+    # metadata_store = SparqlMetadataStore()
+    yield {"metadata_store": metadata_store}
+    """ Run on shutdown
+        Close the connection
+        Clear variables and release the resources
+    """
+    pass
+
+
+app = FastAPI(lifespan=lifespan)
 
 # Make sure the OAI namespace is set as default namespace
 fastapi_xml.response.NS_MAP = {None: "http://www.openarchives.org/OAI/2.0/"}
@@ -73,7 +88,9 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
                     },
                     value=str(request.base_url),
                 ),
-                **globals()[snakecase(verb)](**query_params),
+                **globals()[snakecase(verb)](
+                    request.state.metadata_store, **query_params
+                ),
             )
         )
     else:
@@ -81,7 +98,9 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
         return {"error": "Invalid verb"}
 
 
-def get_record(metadataPrefix: str, identifier: str, **kwargs) -> dict:
+def get_record(
+    metadata_store: MetadataStore, metadataPrefix: str, identifier: str, **kwargs
+) -> dict:
     """Implements the GetRecord verb."""
     for rec in metadata_store.records(identifier=identifier):
         return {
@@ -95,7 +114,7 @@ def get_record(metadataPrefix: str, identifier: str, **kwargs) -> dict:
     }
 
 
-def identify(**kwargs) -> dict:
+def identify(metadata_store: MetadataStore, **kwargs) -> dict:
     """Implements the Identify verb."""
     settings = get_settings()
     return {
@@ -114,6 +133,7 @@ def identify(**kwargs) -> dict:
 
 
 def list_identifiers(
+    metadata_store: MetadataStore,
     metadataPrefix: str,
     **kwargs,
 ) -> dict:
@@ -133,7 +153,9 @@ def list_identifiers(
     }
 
 
-def list_metadata_formats(identifier: str = None, **kwargs) -> dict:
+def list_metadata_formats(
+    metadata_store: MetadataStore, identifier: str = None, **kwargs
+) -> dict:
     """Implements the ListMetadataFormats verb."""
     return {
         "list_metadata_formats": ListMetadataFormatsType(
@@ -142,7 +164,7 @@ def list_metadata_formats(identifier: str = None, **kwargs) -> dict:
     }
 
 
-def list_records(metadataPrefix: str, **kwargs) -> dict:
+def list_records(metadata_store: MetadataStore, metadataPrefix: str, **kwargs) -> dict:
     """Implements the ListRecords verb."""
     return {
         "list_records": ListRecordsType(
@@ -154,7 +176,7 @@ def list_records(metadataPrefix: str, **kwargs) -> dict:
     }
 
 
-def list_sets(**kwargs) -> dict:
+def list_sets(metadata_store: MetadataStore, **kwargs) -> dict:
     """Implements the ListSets verb."""
     return {
         "list_sets": ListSetsType(
