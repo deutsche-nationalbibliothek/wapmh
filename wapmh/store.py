@@ -1,10 +1,10 @@
+import importlib.resources
 from abc import ABC, abstractmethod
-from textwrap import dedent
-from typing import Any, Iterator, Mapping, Optional, Union
+from typing import Iterator
 
+from query_collection import TemplateQueryCollection
 from rdflib import Graph, Literal, URIRef
 from rdflib.namespace import DC
-from rdflib.plugins.sparql.sparql import Query
 
 
 class MetadataStore(ABC):
@@ -57,7 +57,7 @@ class MockMetadataStore(MetadataStore):
 
 
 class SparqlMetadataStore(MetadataStore):
-    def __init__(self, graph: Graph, queries: dict):
+    def __init__(self, graph: Graph, queries: TemplateQueryCollection):
         self.graph = graph
         self.queries = queries
 
@@ -73,9 +73,12 @@ class SparqlMetadataStore(MetadataStore):
                 identifier=Literal(identifier)
             )
         elif from_ or until:
-            headersSelect = self.queries.get("dateRangeHeadersSelect").p(
-                **{"from": Literal(from_), "until": Literal(until)}
-            )
+            dateRange = {}
+            if from_:
+                dateRange["from"] = Literal(from_)
+            if until:
+                dateRange["until"] = Literal(until)
+            headersSelect = self.queries.get("dateRangeHeadersSelect").p(**dateRange)
         else:
             headersSelect = self.queries.get("allHeadersSelect").p()
 
@@ -90,111 +93,16 @@ class SparqlMetadataStore(MetadataStore):
             yield {**(row.asdict()), "metadata": metadata}
 
 
-class TemplateQueryCollection(dict):
-    def __init__(self, queries: dict = {}, initNs: Optional[Mapping[str, Any]] = None):
-        self.queries = queries
-        self.initNs = initNs
-
-    def get(self, key):
-        query_object = self.queries.get(key)
-        if not isinstance(query_object, TemplateQuery):
-            return TemplateQuery(query_object=query_object, initNs=self.initNs)
-        else:
-            return query_object
-
-    def set(self, key, val):
-        self.queries[key] = val
-
-
-class TemplateQuery:
-    def __init__(
-        self,
-        query_object: Union[str, Query],
-        initNs: Optional[Mapping[str, Any]] = None,
-    ):
-        self.query_object = query_object
-        self.initNs = initNs
-
-    def prepare(self, **initBindings):
-        return {
-            "query_object": self.query_object,
-            "initNs": self.initNs,
-            "initBindings": initBindings,
-        }
-
-    p = prepare
-
-
-metadata = """
-@prefix bibo: <http://purl.org/ontology/bibo/> .
-@prefix lv:   <http://purl.org/lobid/lv#> .
-@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
-@prefix dc: <http://purl.org/dc/elements/1.1/> .
-@prefix dcterms: <http://purl.org/dc/terms/> .
-@prefix foaf: <http://xmlns.com/foaf/0.1/> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix rdau: <http://rdaregistry.info/Elements/u/> .
-@prefix wdrs: <http://www.w3.org/2007/05/powder-s#> .
-@prefix gndo: <https://d-nb.info/standards/elementset/gnd#> .
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-
-<https://d-nb.info/1334427879> a bibo:Periodical, lv:ArchivedWebPage, <http://data.archiveshub.ac.uk/def/ArchivalResource>, bf:Archival;
-  dc:identifier "(DE-101)1334427879";
-  dc:date "" ;
-  foaf:primaryTopic <https://www.dmg-ev.de/> ;
-  lv:webPageArchived <https://www.dmg-ev.de/> ;
-  rdau:P60049 <https://d-nb.info/gnd/4596172-4>;
-  dc:title "Deutsche Meteorologische Gesellschaft e.V., DMG";
-  wdrs:describedby <https://d-nb.info/1334427879/about> .
-
-<https://d-nb.info/1352272679> dcterms:medium <http://rdaregistry.info/termList/RDACarrierType/1018>;
-  rdau:P60049 <http://rdaregistry.info/termList/RDAContentType/1020>;
-  rdau:P60050 <http://rdaregistry.info/termList/RDAMediaType/1003>;
-  rdau:P60048 <http://rdaregistry.info/termList/RDACarrierType/1018>;
-  dc:identifier "(DE-101)1352272679";
-  rdau:P60049 <https://d-nb.info/gnd/4596172-4>;
-  dcterms:isPartOf <https://d-nb.info/1334427879>;
-  wdrs:describedby <https://d-nb.info/1352272679/about> .
-
-<https://d-nb.info/1352272679/about> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/>;
-  dcterms:modified "2024-12-30T18:01:13.000"^^xsd:dateTime .
-
-<https://d-nb.info/1352272679> dcterms:issued "2024";
-  bibo:issue "2024-12-21";
-  owl:sameAs <http://hub.culturegraph.org/resource/DNB-1352272679> .
-"""
-
-graph = Graph().parse(data=metadata, format="turtle")
-
-tqc = TemplateQueryCollection(initNs=dict(graph.namespaces()))
-tqc.set(
-    "identifiedHeaderSelect",
-    dedent("""
-            prefix bibo: <http://purl.org/ontology/bibo/>
-            prefix lv:   <http://purl.org/lobid/lv#>
-            prefix bf: <http://id.loc.gov/ontologies/bibframe/>
-            select ?identifier ?datestamp {
-                ?resourceIri a lv:ArchivedWebPage ;
-                dc:identifier ?identifier .
-            }
-            """),
-)
-tqc.set("dateRangeHeadersSelect", tqc.get("identifiedHeaderSelect"))
-tqc.set("allHeadersSelect", tqc.get("identifiedHeaderSelect"))
-tqc.set(
-    "recordConstruct",
-    dedent("""
-            prefix bibo: <http://purl.org/ontology/bibo/>
-            prefix lv:   <http://purl.org/lobid/lv#>
-            prefix bf: <http://id.loc.gov/ontologies/bibframe/>
-            prefix dc: <http://purl.org/dc/elements/1.1/>
-
-            construct where {
-                ?resourceIri a lv:ArchivedWebPage ;
-                    dc:identifier ?identifier ;
-                    ?p ?o .
-            }
-            """),
-)
-
-mocked_sparql_metadata_store = SparqlMetadataStore(graph, tqc)
+class MockSparqlMetadataStore(SparqlMetadataStore):
+    def __init__(self):
+        with (
+            importlib.resources.path(
+                self.__module__, "../example/data.ttl"
+            ) as graph_path,
+            importlib.resources.path(
+                self.__module__, "../example/queries"
+            ) as query_path,
+        ):
+            self.graph = Graph().parse(source=graph_path, format="turtle")
+            self.queries = TemplateQueryCollection(initNs=dict(self.graph.namespaces()))
+            self.queries.loadFromDirectory(query_path)

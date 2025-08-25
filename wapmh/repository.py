@@ -29,12 +29,12 @@ from .model.oai_pmh import (
     ResumptionTokenType,
     SetType,
 )
-from .store import mocked_sparql_metadata_store
+from .store import MockSparqlMetadataStore
 
 app = FastAPI()
 
 # metadata_store = MockMetadataStore()
-metadata_store = mocked_sparql_metadata_store
+metadata_store = MockSparqlMetadataStore()
 
 # Make sure the OAI namespace is set as default namespace
 fastapi_xml.response.NS_MAP = {None: "http://www.openarchives.org/OAI/2.0/"}
