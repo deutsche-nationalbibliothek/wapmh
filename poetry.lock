@@ -1088,14 +1088,14 @@ files = [
 
 [[package]]
 name = "query-collection"
-version = "0.1.1"
+version = "0.1.2"
 description = "This should be an interface and implementation of a collection that holds SPARQL 1.1 queries."
 optional = false
 python-versions = "<4.0.0,>=3.13"
 groups = ["main"]
 files = [
-    {file = "query_collection-0.1.1-py3-none-any.whl", hash = "sha256:09dbf16e619e0663fc72cf31e90dc92eb55b587ce4ec57b3152083e7e11c8a5e"},
-    {file = "query_collection-0.1.1.tar.gz", hash = "sha256:83a747fd97380debc199bfd4424c0e66f6e14437dc3b9fce8769e563e3862daf"},
+    {file = "query_collection-0.1.2-py3-none-any.whl", hash = "sha256:fc6eddf5a60b8508f74736b5135b27fa7a256ad63e356b52f48d975b88af9c74"},
+    {file = "query_collection-0.1.2.tar.gz", hash = "sha256:d462349d22105b3b4e0df1d6d488be377614ca4668fad93d06b748f745e2a347"},
 ]
 
 [package.dependencies]
@@ -1815,4 +1815,4 @@ resolved_reference = "c4275916aa556a4d18c6c9e8aaf7493118025c3d"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.13,<4.0"
-content-hash = "ff8d46f39ffded8d8b8fadda7fd75102487ece588dd61310375d3cc197cad8b4"
+content-hash = "794162476850080d82e50c9572f94d41cafa30da97db6395804e3ea1938169d3"
