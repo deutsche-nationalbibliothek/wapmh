@@ -2,8 +2,15 @@ prefix bibo: <http://purl.org/ontology/bibo/>
 prefix lv:   <http://purl.org/lobid/lv#>
 prefix bf: <http://id.loc.gov/ontologies/bibframe/>
 prefix dc: <http://purl.org/dc/elements/1.1/>
+prefix dcterms: <http://purl.org/dc/terms/>
 
-construct where {
+construct {
+    ?resourceIri a lv:ArchivedWebPage ;
+        dc:identifier ?identifier ;
+        dcterms:isPartOf ?work ;
+        ?p ?o .
+        ?work ?wp ?wo .
+} where {
     ?resourceIri a lv:ArchivedWebPage ;
         dc:identifier ?identifier ;
         dcterms:isPartOf ?work ;
