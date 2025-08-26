@@ -9,6 +9,19 @@ from rdflib.namespace import DC
 
 class MetadataStore(ABC):
     @abstractmethod
+    def identifiers(self, **kwargs) -> Iterator[dict]:
+        """This method return identifier dicts.
+
+        kwargs: are the named arguments that can be used to restrict the records to be returned.
+            If the field identifier is specifeid, the exact record is yielded or nothing.
+            If the fields from or until are specifeid the records are restricted according to their date property.
+            If the field set is specifeid … not yet implemented.
+
+        returns an iterator of identifier dicts.
+        These are the same as returned by records, just the metadata might not be included.
+        """
+
+    @abstractmethod
     def records(self, **kwargs) -> Iterator[dict]:
         """This method return record dicts.
 
@@ -18,6 +31,7 @@ class MetadataStore(ABC):
             If the field set is specifeid … not yet implemented.
 
         returns an iterator of record dicts.
+        These are the same as returned by identifiers, but the metadata is required.
         """
 
 
@@ -32,6 +46,8 @@ class MockMetadataStore(MetadataStore):
     def records(self, **kwargs):
         for rec in self._records(**kwargs):
             yield {**rec, "metadata": self.get_graph(**rec)}
+
+    identifiers = records
 
     def _records(self, **kwargs):
         identifier = kwargs.get("identifier")
@@ -61,7 +77,7 @@ class SparqlMetadataStore(MetadataStore):
         self.graph = graph
         self.queries = queries
 
-    def records(self, **kwargs):
+    def identifiers(self, **kwargs):
         identifier = kwargs.get("identifier")
         from_value = kwargs.get("from")
         until = kwargs.get("until")
@@ -82,15 +98,28 @@ class SparqlMetadataStore(MetadataStore):
         else:
             headersSelect = self.queries.get("allHeadersSelect").p()
 
-        recordConstruct = self.queries.get("recordConstruct")
-        for row in self.graph.query(**headersSelect):
+        try:
+            for row in self.graph.query(**headersSelect):
+                yield row.asdict()
+        except Exception as e:
+            raise StoreBackendException("Backend not available or invalid query.", e)
+
+    def records(self, **kwargs):
+        for header in self.identifiers(**kwargs):
+            yield {**header, "metadata": self.metadata(header["identifier"])}
+
+    def metadata(self, identifier):
+        try:
+            recordConstruct = self.queries.get("recordConstruct")
             metadata = self.graph.query(
-                **(recordConstruct.p(identifier=Literal(row["identifier"])))
+                **(recordConstruct.p(identifier=Literal(identifier)))
             ).graph
             # hack, construct result only contain the default namespace_manager
             # overwrite it to have all namespaces as defined on the store
             metadata.namespace_manager = self.graph.namespace_manager
-            yield {**(row.asdict()), "metadata": metadata}
+            return metadata
+        except Exception as e:
+            raise StoreBackendException("Backend not available or invalid query.", e)
 
 
 class MockSparqlMetadataStore(SparqlMetadataStore):
@@ -106,3 +135,11 @@ class MockSparqlMetadataStore(SparqlMetadataStore):
             self.graph = Graph().parse(source=graph_path, format="turtle")
             self.queries = TemplateQueryCollection(initNs=dict(self.graph.namespaces()))
             self.queries.loadFromDirectory(query_path)
+
+
+class StoreException(Exception):
+    """Exceptions that are raised in the Store."""
+
+
+class StoreBackendException(StoreException):
+    """Exceptions that are raised in the Store."""
