@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request
 from fastapi_xml import XmlAppResponse
 from query_collection import TemplateQueryCollection
 from rdflib import Graph
+from rdflib.plugins.stores.sparqlstore import SPARQLStore
 from stringcase import snakecase
 from xsdata.formats.dataclass.etree import etree
 from xsdata.models.datatype import XmlDateTime
@@ -39,13 +40,7 @@ async def lifespan(app: FastAPI):
     """Run at startup
     Initialize the Client and add it to request.state
     """
-    settings = get_settings()
-
-    graph = Graph().parse(source=settings.graph_path, format="turtle")
-    queries = TemplateQueryCollection(initNs=dict(graph.namespaces()))
-    queries.loadFromDirectory(settings.query_path)
-    metadata_store = SparqlMetadataStore(graph=graph, queries=queries)
-    yield {"metadata_store": metadata_store}
+    yield {"metadata_store": get_metadata_store()}
     """ Run on shutdown
         Close the connection
         Clear variables and release the resources
@@ -62,6 +57,21 @@ fastapi_xml.response.NS_MAP = {None: "http://www.openarchives.org/OAI/2.0/"}
 @lru_cache
 def get_settings():
     return config.Settings()
+
+
+@lru_cache
+def get_metadata_store():
+    settings = get_settings()
+    if settings.graph_path:
+        graph = Graph().parse(source=settings.graph_path, format="turtle")
+    elif settings.sparql_endpoint:
+        store = SPARQLStore(query_endpoint=settings.sparql_endpoint)
+        graph = Graph(store=store)
+    else:
+        raise Exception("No graph configured")
+    queries = TemplateQueryCollection()
+    queries.loadFromDirectory(settings.query_path)
+    return SparqlMetadataStore(graph=graph, queries=queries)
 
 
 @app.get("/", response_class=XmlAppResponse)
