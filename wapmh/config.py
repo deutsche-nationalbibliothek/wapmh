@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     description: str = "This is the OAI-PMH endpoint of the Webarchive."
     admin_emails: Optional[list[str]] = None
 
-    sparql_endpoint: str = "http://localhost:5000/query"
+    sparql_endpoint: str = ""
     graph_path: str = ""
     query_path: str = ""
 
