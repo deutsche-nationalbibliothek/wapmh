@@ -165,7 +165,7 @@ def list_identifiers(
                     datestamp=rec.get("datestamp"),
                     set_spec=[],
                 )
-                for rec in metadata_store.records(**kwargs)
+                for rec in metadata_store.identifiers(**kwargs)
             ],
             resumption_token=None,
         )
