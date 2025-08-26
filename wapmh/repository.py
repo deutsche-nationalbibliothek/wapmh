@@ -31,7 +31,7 @@ from .model.oai_pmh import (
     ResumptionTokenType,
     SetType,
 )
-from .store import MetadataStore, SparqlMetadataStore
+from .store import MetadataStore, SparqlMetadataStore, StoreException
 
 
 @asynccontextmanager
@@ -84,18 +84,27 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
         )
         if "metadataPrefix" not in query_params:
             query_params["metadataPrefix"] = "oai_dc"
-        return XmlAppResponse(
-            OaiPmh(
-                response_date=XmlDateTime.now(),
-                request=RequestType(
-                    **request_type_parameters,
-                    value=str(request.base_url),
-                ),
-                **globals()[snakecase(verb)](
-                    request.state.metadata_store, **query_params
+
+        try:
+            return XmlAppResponse(
+                OaiPmh(
+                    response_date=XmlDateTime.now(),
+                    request=RequestType(
+                        **request_type_parameters,
+                        value=str(request.base_url),
+                    ),
+                    **globals()[snakecase(verb)](
+                        request.state.metadata_store, **query_params
+                    ),
+                )
+            )
+        except StoreException:
+            return XmlAppResponse(
+                status_code=500,
+                content=ApplicationErrorType(
+                    value="500 Internal Server Error: Store Exception"
                 ),
             )
-        )
     else:
         return XmlAppResponse(
             OaiPmh(
@@ -225,6 +234,19 @@ def get_record_type(rec, metadataPrefix) -> RecordType:
             set_spec=[],
         ),
         metadata=MetadataType(other_element=rdf_elements),
+    )
+
+
+@dataclasses.dataclass
+class ApplicationErrorType:
+    class Meta:
+        name = "ApplicationError"
+
+    value: str = dataclasses.field(
+        default="",
+        metadata={
+            "required": True,
+        },
     )
 
 
