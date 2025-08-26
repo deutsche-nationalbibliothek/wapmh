@@ -77,6 +77,10 @@ class SparqlMetadataStore(MetadataStore):
         self.graph = graph
         self.queries = queries
 
+    def records(self, **kwargs):
+        for header in self.identifiers(**kwargs):
+            yield {**header, "metadata": self.metadata(header["identifier"])}
+
     def identifiers(self, **kwargs):
         identifier = kwargs.get("identifier")
         from_value = kwargs.get("from")
@@ -103,10 +107,6 @@ class SparqlMetadataStore(MetadataStore):
                 yield row.asdict()
         except Exception as e:
             raise StoreBackendException("Backend not available or invalid query.", e)
-
-    def records(self, **kwargs):
-        for header in self.identifiers(**kwargs):
-            yield {**header, "metadata": self.metadata(header["identifier"])}
 
     def metadata(self, identifier):
         try:
