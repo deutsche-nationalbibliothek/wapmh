@@ -23,3 +23,14 @@ tasks:
       PYTHONPATH: .
     cmds:
       - poetry run pytest
+
+  container:run:
+    desc: Run the OCI container
+    cmds:
+      - |
+        podman run --rm -d -p 8080:8080 \
+          -v ./example/queries/:/data/queries:z \
+          -e QUERY_PATH="/data/queries" \
+          -e SPARQL_ENDPOINT="http://localhost:5000/" \
+          -e ADMIN_EMAILS='["you@example.org"]' \
+          ghcr.io/deutsche-nationalbibliothek/wapmh:main
