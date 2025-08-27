@@ -68,9 +68,12 @@ def get_metadata_store():
         store = SPARQLStore(query_endpoint=settings.sparql_endpoint)
         graph = Graph(store=store)
     else:
-        raise Exception("No graph configured")
-    queries = TemplateQueryCollection()
-    queries.loadFromDirectory(settings.query_path)
+        raise Exception("No graph configured. You need to set a SPARQL_ENDPOINT or GRAPH_PATH.")
+    if settings.query_path:
+        queries = TemplateQueryCollection()
+        queries.loadFromDirectory(settings.query_path)
+    else:
+        raise Exception("No queries configured. You need to set a QUERY_PATH.")
     return SparqlMetadataStore(graph=graph, queries=queries)
 
 
