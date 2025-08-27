@@ -5,7 +5,7 @@ description = "Webarchive Public Metadata Harvesting"
 authors = [
     {name = "Natanael Arndt",email = "n.arndt@dnb.de"}
 ]
-license = "GPLv3+"
+license = {text = "GPL-3.0-or-later"}
 readme = "README.md"
 requires-python = ">=3.13,<4.0"
 dependencies = [
