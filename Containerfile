@@ -23,6 +23,5 @@ ENV VIRTUAL_ENV=/app/.venv \
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
 COPY wapmh ./wapmh
-COPY README.md ./README.md
 
 CMD ["uvicorn", "wapmh.repository:app", "--host", "", "--port", "8080"]
