@@ -1,0 +1,18 @@
+@prefix doap: <http://usefulinc.com/ns/doap#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<https://github.com/deutsche-nationalbibliothek/wapmh> a doap:Project ;
+    doap:description "Webarchive Public Metadata Harvesting" ;
+    doap:developer <mailto:n.arndt@dnb.de> ;
+    doap:license <https://spdx.org/licenses/GPL-3.0-or-later> ;
+    doap:name "wapmh" ;
+    doap:shortdesc "Webarchive Public Metadata Harvesting" .
+
+<https://spdx.org/licenses/GPL-3.0-or-later> rdfs:label "GPL-3.0-or-later" .
+
+<mailto:n.arndt@dnb.de> a foaf:Agent ;
+    foaf:mbox <mailto:n.arndt@dnb.de> ;
+    foaf:name "Natanael Arndt" .
+
+
