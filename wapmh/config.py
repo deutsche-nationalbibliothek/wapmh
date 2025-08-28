@@ -10,4 +10,6 @@ class Settings(BaseSettings):
     graph_path: str = ""
     query_path: str = ""
 
+    limit: int = ""
+
     model_config = SettingsConfigDict(env_file="default.env")
