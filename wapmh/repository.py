@@ -9,10 +9,10 @@ from query_collection import TemplateQueryCollection
 from rdflib import Graph
 from rdflib.plugins.stores.sparqlstore import SPARQLStore
 from stringcase import snakecase
-from xsdata.formats.dataclass.etree import etree
 from xsdata.models.datatype import XmlDateTime
 
 from . import config
+from .adapters import MetadataAdapterRegistry, RdfMetadataAdapter, RequestAdapter
 from .model.oai_pmh import (
     DescriptionType,
     GetRecordType,
@@ -23,12 +23,9 @@ from .model.oai_pmh import (
     ListRecordsType,
     ListSetsType,
     MetadataFormatType,
-    MetadataType,
     OaiPmh,
     OaiPmherrorcodeType,
     OaiPmherrorType,
-    RecordType,
-    RequestType,
     ResumptionTokenType,
     SetType,
 )
@@ -68,13 +65,23 @@ def get_metadata_store():
         store = SPARQLStore(query_endpoint=settings.sparql_endpoint)
         graph = Graph(store=store)
     else:
-        raise Exception("No graph configured. You need to set a SPARQL_ENDPOINT or GRAPH_PATH.")
+        raise Exception(
+            "No graph configured. You need to set a SPARQL_ENDPOINT or GRAPH_PATH."
+        )
     if settings.query_path:
         queries = TemplateQueryCollection()
         queries.loadFromDirectory(settings.query_path)
     else:
         raise Exception("No queries configured. You need to set a QUERY_PATH.")
     return SparqlMetadataStore(graph=graph, queries=queries)
+
+
+@lru_cache
+def get_record_adapter_registry() -> MetadataAdapterRegistry:
+    registry = MetadataAdapterRegistry()
+    registry.register("oai_dc", RdfMetadataAdapter)
+    registry.register("rdf", RdfMetadataAdapter)
+    return registry
 
 
 @app.get("/", response_class=XmlAppResponse)
@@ -92,9 +99,6 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
         "ListSets",
     ]:
         query_params = dict(request.query_params)
-        request_type_parameters = dict(
-            query_params_to_request_type_parameters(request.query_params)
-        )
         if "metadataPrefix" not in query_params:
             query_params["metadataPrefix"] = "oai_dc"
 
@@ -102,10 +106,7 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
             return XmlAppResponse(
                 OaiPmh(
                     response_date=XmlDateTime.now(),
-                    request=RequestType(
-                        **request_type_parameters,
-                        value=str(request.base_url),
-                    ),
+                    request=RequestAdapter.request(request),
                     **globals()[snakecase(verb)](
                         request.state.metadata_store, **query_params
                     ),
@@ -128,25 +129,13 @@ async def oai_pmh(verb: str, request: Request = None) -> XmlAppResponse:
         )
 
 
-def query_params_to_request_type_parameters(query_params):
-    """This helper method is required to translate some field names that are reserved words in python.
-    Those words hold the parameter name in the metadate field 'name'."""
-    fields = {
-        f.metadata.get("name") or f.name: f for f in dataclasses.fields(RequestType)
-    }
-    for key in query_params:
-        if key in fields:
-            yield fields[key].name, query_params[key]
-
-
 def get_record(
     metadata_store: MetadataStore, metadataPrefix: str, identifier: str, **kwargs
 ) -> dict:
     """Implements the GetRecord verb."""
-    for rec in metadata_store.records(identifier=identifier):
-        return {
-            "get_record": GetRecordType(record=get_record_type(rec, metadataPrefix))
-        }
+    adapter = get_record_adapter_registry().adapter(metadata_store, metadataPrefix)
+    if record := adapter.record(identifier=identifier):
+        return {"get_record": GetRecordType(record=record)}
 
     return {
         "error": OaiPmherrorType(
@@ -208,14 +197,8 @@ def list_metadata_formats(
 
 def list_records(metadata_store: MetadataStore, metadataPrefix: str, **kwargs) -> dict:
     """Implements the ListRecords verb."""
-    return {
-        "list_records": ListRecordsType(
-            record=[
-                get_record_type(rec, metadataPrefix)
-                for rec in metadata_store.records(**kwargs)
-            ]
-        )
-    }
+    adapter = get_record_adapter_registry().adapter(metadata_store, metadataPrefix)
+    return {"list_records": ListRecordsType(record=list(adapter.records(**kwargs)))}
     # TODO: return an error in case of an empty result
 
 
@@ -233,21 +216,6 @@ def list_sets(metadata_store: MetadataStore, **kwargs) -> dict:
             set=[SetType()], resumption_token=ResumptionTokenType()
         )
     }
-
-
-def get_record_type(rec, metadataPrefix) -> RecordType:
-    """Get a record according to the metadataPrefix."""
-    g = rec.get("metadata")
-    rdf_string = g.serialize(format="application/rdf+xml", encoding="utf-8")
-    rdf_elements = etree.fromstring(rdf_string)
-    return RecordType(
-        header=HeaderType(
-            identifier=rec.get("identifier"),
-            datestamp=rec.get("datestamp"),
-            set_spec=[],
-        ),
-        metadata=MetadataType(other_element=rdf_elements),
-    )
 
 
 @dataclasses.dataclass
