@@ -13,6 +13,7 @@ from .model.oai_pmh import (
     RequestType,
 )
 from .store import MetadataStore
+from dcxml import simpledc
 
 
 class RequestAdapter:
@@ -68,11 +69,42 @@ class MetadataAdapter:
 
 
 class RdfMetadataAdapter(MetadataAdapter):
+    schema = "http://www.w3.org/2001/XMLSchema-datatypes"
+    metadata_namespace = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+
     def metadata(self, metadata: Graph) -> MetadataType:
         """Convert the metadata according to the metadataPrefix."""
         rdf_string = metadata.serialize(format="application/rdf+xml", encoding="utf-8")
         rdf_elements = etree.fromstring(rdf_string)
         return MetadataType(other_element=rdf_elements)
+
+
+class OaiDcMetadataAdapter(MetadataAdapter):
+    schema = "http://www.openarchives.org/OAI/2.0/oai_dc.xsd"
+    metadata_namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/"
+
+    def metadata(self, metadata: Graph) -> MetadataType:
+        """Convert the metadata according to the metadataPrefix."""
+        rdf_string = metadata.serialize(format="application/rdf+xml", encoding="utf-8")
+        dc = {
+            "contributors": ["CERN"],
+            "coverage": ["Geneva"],
+            "creators": ["CERN"],
+            "dates": ["2002"],
+            "descriptions": ["Simple Dublin Core generation"],
+            "formats": ["application/xml"],
+            "identifiers": ["dublin-core"],
+            "languages": ["en"],
+            "publishers": ["CERN"],
+            "relations": ["Invenio Software"],
+            "rights": ["MIT"],
+            "sources": ["Python"],
+            "subject": ["XML"],
+            "titles": ["Dublin Core XML"],
+            "types": ["Software"],
+        }
+        dc_elements = simpledc.dump_etree(dc)
+        return MetadataType(other_element=dc_elements)
 
 
 class MetadataAdapterRegistry:
@@ -84,3 +116,6 @@ class MetadataAdapterRegistry:
 
     def adapter(self, store: MetadataStore, metadataPrefix) -> MetadataAdapter:
         return self.registry[metadataPrefix](store)
+
+    def listPrefixes(self) -> list[str]:
+        return self.registry

@@ -12,7 +12,12 @@ from stringcase import snakecase
 from xsdata.models.datatype import XmlDateTime
 
 from . import config
-from .adapters import MetadataAdapterRegistry, RdfMetadataAdapter, RequestAdapter
+from .adapters import (
+    MetadataAdapterRegistry,
+    OaiDcMetadataAdapter,
+    RdfMetadataAdapter,
+    RequestAdapter,
+)
 from .model.oai_pmh import (
     DescriptionType,
     GetRecordType,
@@ -79,7 +84,7 @@ def get_metadata_store():
 @lru_cache
 def get_record_adapter_registry() -> MetadataAdapterRegistry:
     registry = MetadataAdapterRegistry()
-    registry.register("oai_dc", RdfMetadataAdapter)
+    registry.register("oai_dc", OaiDcMetadataAdapter)
     registry.register("rdf", RdfMetadataAdapter)
     return registry
 
@@ -188,9 +193,17 @@ def list_metadata_formats(
     metadata_store: MetadataStore, identifier: str = None, **kwargs
 ) -> dict:
     """Implements the ListMetadataFormats verb."""
+    prefixes = get_record_adapter_registry().listPrefixes()
     return {
         "list_metadata_formats": ListMetadataFormatsType(
-            metadata_format=[MetadataFormatType()]
+            metadata_format=[
+                MetadataFormatType(
+                    metadata_prefix=prefix,
+                    schema=prefixes[prefix].schema,
+                    metadata_namespace=prefixes[prefix].metadata_namespace,
+                )
+                for prefix in prefixes
+            ]
         )
     }
 
