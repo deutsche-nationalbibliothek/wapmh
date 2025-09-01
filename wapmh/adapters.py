@@ -2,8 +2,11 @@ import dataclasses
 from abc import abstractmethod
 from typing import Any
 
+from dcxml import simpledc
 from fastapi import Request
-from rdflib import Graph
+from rdflib import Graph, Literal, URIRef
+from rdflib.namespace import DC
+from rdflib.resource import Resource
 from xsdata.formats.dataclass.etree import etree
 
 from .model.oai_pmh import (
@@ -13,7 +16,6 @@ from .model.oai_pmh import (
     RequestType,
 )
 from .store import MetadataStore
-from dcxml import simpledc
 
 
 class RequestAdapter:
@@ -59,11 +61,13 @@ class MetadataAdapter:
                     datestamp=rec.get("datestamp"),
                     set_spec=[],
                 ),
-                metadata=self.metadata(rec.get("metadata")),
+                metadata=self.metadata(
+                    rec.get("metadata"), identifier=rec.get("identifier")
+                ),
             )
 
     @abstractmethod
-    def metadata(self, metadata: Any) -> MetadataType:
+    def metadata(self, metadata: Any, identifier: str) -> MetadataType:
         """Get a record according to the metadataPrefix."""
         pass
 
@@ -72,7 +76,7 @@ class RdfMetadataAdapter(MetadataAdapter):
     schema = "http://www.w3.org/2001/XMLSchema-datatypes"
     metadata_namespace = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 
-    def metadata(self, metadata: Graph) -> MetadataType:
+    def metadata(self, metadata: Graph, identifier: str) -> MetadataType:
         """Convert the metadata according to the metadataPrefix."""
         rdf_string = metadata.serialize(format="application/rdf+xml", encoding="utf-8")
         rdf_elements = etree.fromstring(rdf_string)
@@ -83,25 +87,38 @@ class OaiDcMetadataAdapter(MetadataAdapter):
     schema = "http://www.openarchives.org/OAI/2.0/oai_dc.xsd"
     metadata_namespace = "http://www.openarchives.org/OAI/2.0/oai_dc/"
 
-    def metadata(self, metadata: Graph) -> MetadataType:
+    def metadata(self, metadata: Graph, identifier: str) -> MetadataType:
         """Convert the metadata according to the metadataPrefix."""
-        rdf_string = metadata.serialize(format="application/rdf+xml", encoding="utf-8")
+        conversion_query = self.store.queries.get("recordOaiDcConstruct").p(
+            identifier=Literal(identifier)
+        )
+        dc_metadata = metadata.query(**conversion_query).graph
+        res = dc_metadata.resource(next(dc_metadata.subjects()))
+
+        def rdf_to_python(res: Resource | Literal):
+            if isinstance(res, Resource):
+                return res.identifier.toPython()
+            return res.toPython()
+
+        def objects_list(res: Resource, prop: URIRef):
+            return [rdf_to_python(obj) for obj in res.objects(prop)]
+
         dc = {
-            "contributors": ["CERN"],
-            "coverage": ["Geneva"],
-            "creators": ["CERN"],
-            "dates": ["2002"],
-            "descriptions": ["Simple Dublin Core generation"],
-            "formats": ["application/xml"],
-            "identifiers": ["dublin-core"],
-            "languages": ["en"],
-            "publishers": ["CERN"],
-            "relations": ["Invenio Software"],
-            "rights": ["MIT"],
-            "sources": ["Python"],
-            "subject": ["XML"],
-            "titles": ["Dublin Core XML"],
-            "types": ["Software"],
+            "contributors": objects_list(res, DC.contributor),
+            "coverage": objects_list(res, DC.coverage),
+            "creators": objects_list(res, DC.creator),
+            "dates": objects_list(res, DC.date),
+            "descriptions": objects_list(res, DC.description),
+            "formats": objects_list(res, DC.format),
+            "identifiers": objects_list(res, DC.identifier),
+            "languages": objects_list(res, DC.language),
+            "publishers": objects_list(res, DC.publisher),
+            "relations": objects_list(res, DC.relation),
+            "rights": objects_list(res, DC.rights),
+            "sources": objects_list(res, DC.source),
+            "subjects": objects_list(res, DC.subject),
+            "titles": objects_list(res, DC.title),
+            "types": objects_list(res, DC.type),
         }
         dc_elements = simpledc.dump_etree(dc)
         return MetadataType(other_element=dc_elements)
