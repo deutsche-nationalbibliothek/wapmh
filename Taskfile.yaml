@@ -15,6 +15,11 @@ tasks:
   serve:
     desc: Run the OAI-PMH Repository in a development server
     cmds:
+      - poetry run uvicorn wapmh.repository:app
+
+  serve:dev:
+    desc: Run the OAI-PMH Repository in a development server
+    cmds:
       - poetry run fastapi dev wapmh/repository.py
 
   test:
