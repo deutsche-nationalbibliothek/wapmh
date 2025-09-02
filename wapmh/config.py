@@ -13,4 +13,4 @@ class Settings(BaseSettings):
 
     limit: int = ""
 
-    model_config = SettingsConfigDict(env_file="default.env")
+    model_config = SettingsConfigDict(env_file=["default.env", "custom.env"])
