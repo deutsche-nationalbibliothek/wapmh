@@ -11,6 +11,6 @@ class Settings(BaseSettings):
     graph_path: str = ""
     query_path: str = ""
 
-    limit: int = ""
+    limit: int = "10"
 
     model_config = SettingsConfigDict(env_file=["default.env", "custom.env"])
