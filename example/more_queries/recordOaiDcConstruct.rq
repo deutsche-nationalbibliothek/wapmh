@@ -23,6 +23,8 @@ construct {
         dc:identifier ?identifier ;
         bibo:issue ?datestamp ;
         dcterms:isPartOf ?work .
-    ?work dc:identifier ?workIdentifier ;
-        foaf:primaryTopic ?url .
+    ?work foaf:primaryTopic ?url .
+    optional {
+        ?work dc:identifier ?workIdentifier
+    }
 }
