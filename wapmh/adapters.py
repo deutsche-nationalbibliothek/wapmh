@@ -93,35 +93,37 @@ class OaiDcMetadataAdapter(MetadataAdapter):
             identifier=Literal(identifier)
         )
         dc_metadata = metadata.query(**conversion_query).graph
-        res = dc_metadata.resource(next(dc_metadata.subjects()))
 
-        def rdf_to_python(res: Resource | Literal):
-            if isinstance(res, Resource):
-                return res.identifier.toPython()
-            return res.toPython()
+        if subject := next(dc_metadata.subjects(), None):
+            res = dc_metadata.resource(subject)
 
-        def objects_list(res: Resource, prop: URIRef):
-            return [rdf_to_python(obj) for obj in res.objects(prop)]
+            def rdf_to_python(res: Resource | Literal):
+                if isinstance(res, Resource):
+                    return res.identifier.toPython()
+                return res.toPython()
 
-        dc = {
-            "contributors": objects_list(res, DC.contributor),
-            "coverage": objects_list(res, DC.coverage),
-            "creators": objects_list(res, DC.creator),
-            "dates": objects_list(res, DC.date),
-            "descriptions": objects_list(res, DC.description),
-            "formats": objects_list(res, DC.format),
-            "identifiers": objects_list(res, DC.identifier),
-            "languages": objects_list(res, DC.language),
-            "publishers": objects_list(res, DC.publisher),
-            "relations": objects_list(res, DC.relation),
-            "rights": objects_list(res, DC.rights),
-            "sources": objects_list(res, DC.source),
-            "subjects": objects_list(res, DC.subject),
-            "titles": objects_list(res, DC.title),
-            "types": objects_list(res, DC.type),
-        }
-        dc_elements = simpledc.dump_etree(dc)
-        return MetadataType(other_element=dc_elements)
+            def objects_list(res: Resource, prop: URIRef):
+                return [rdf_to_python(obj) for obj in res.objects(prop)]
+
+            dc = {
+                "contributors": objects_list(res, DC.contributor),
+                "coverage": objects_list(res, DC.coverage),
+                "creators": objects_list(res, DC.creator),
+                "dates": objects_list(res, DC.date),
+                "descriptions": objects_list(res, DC.description),
+                "formats": objects_list(res, DC.format),
+                "identifiers": objects_list(res, DC.identifier),
+                "languages": objects_list(res, DC.language),
+                "publishers": objects_list(res, DC.publisher),
+                "relations": objects_list(res, DC.relation),
+                "rights": objects_list(res, DC.rights),
+                "sources": objects_list(res, DC.source),
+                "subjects": objects_list(res, DC.subject),
+                "titles": objects_list(res, DC.title),
+                "types": objects_list(res, DC.type),
+            }
+            dc_elements = simpledc.dump_etree(dc)
+            return MetadataType(other_element=dc_elements)
 
 
 class MetadataAdapterRegistry:
