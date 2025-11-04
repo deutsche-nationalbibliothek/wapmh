@@ -100,7 +100,10 @@ class OaiDcMetadataAdapter(MetadataAdapter):
             def rdf_to_python(res: Resource | Literal):
                 if isinstance(res, Resource):
                     return res.identifier.toPython()
-                return res.toPython()
+                python_typed = res.toPython()
+                if not isinstance(python_typed, (str, int, float, bytes, bytearray)):
+                    python_typed = str(python_typed)
+                return python_typed
 
             def objects_list(res: Resource, prop: URIRef):
                 return [rdf_to_python(obj) for obj in res.objects(prop)]
