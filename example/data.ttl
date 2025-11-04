@@ -1,36 +1,24 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
 @prefix bibo: <http://purl.org/ontology/bibo/> .
-@prefix lv:   <http://purl.org/lobid/lv#> .
-@prefix bf: <http://id.loc.gov/ontologies/bibframe/> .
+@prefix lv: <http://purl.org/lobid/lv#> .
 @prefix dc: <http://purl.org/dc/elements/1.1/> .
 @prefix dcterms: <http://purl.org/dc/terms/> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix rdau: <http://rdaregistry.info/Elements/u/> .
-@prefix wdrs: <http://www.w3.org/2007/05/powder-s#> .
-@prefix gndo: <https://d-nb.info/standards/elementset/gnd#> .
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
 
-<https://d-nb.info/1334427879> a bibo:Periodical ;
-  dc:identifier "(DE-101)1334427879";
-  foaf:primaryTopic <https://www.dmg-ev.de/> ;
-  lv:webPageArchived <https://www.dmg-ev.de/> ;
-  rdau:P60049 <https://d-nb.info/gnd/4596172-4>;
-  dc:title "Deutsche Meteorologische Gesellschaft e.V., DMG";
-  wdrs:describedby <https://d-nb.info/1334427879/about> .
+<https://d-nb.info/1234567801>
+    dc:identifier "(DE-101)1234567801" ;
+    dc:title "Example" ;
+    dcterms:medium <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    a bibo:Website ;
+    foaf:primaryTopic <https://example.org/> .
 
-<https://d-nb.info/1352272679> a lv:ArchivedWebPage ;
-  dcterms:medium <http://rdaregistry.info/termList/RDACarrierType/1018>;
-  rdau:P60049 <http://rdaregistry.info/termList/RDAContentType/1020>;
-  rdau:P60050 <http://rdaregistry.info/termList/RDAMediaType/1003>;
-  rdau:P60048 <http://rdaregistry.info/termList/RDACarrierType/1018>;
-  dc:identifier "(DE-101)1352272679";
-  rdau:P60049 <https://d-nb.info/gnd/4596172-4>;
-  dcterms:isPartOf <https://d-nb.info/1334427879>;
-  wdrs:describedby <https://d-nb.info/1352272679/about> .
-
-<https://d-nb.info/1352272679/about> dcterms:license <http://creativecommons.org/publicdomain/zero/1.0/>;
-  dcterms:modified "2024-12-30T18:01:13.000"^^xsd:dateTime .
-
-<https://d-nb.info/1352272679> dcterms:issued "2024";
-  bibo:issue "2024-12-21";
-  owl:sameAs <http://hub.culturegraph.org/resource/DNB-1352272679> .
+<https://d-nb.info/1234567802>
+    dc:date "2012-05-18T02:00:00+01:00"^^xsd:dateTime ;
+    dc:identifier "(DE-101)1234567802", "1234567802" ;
+    dcterms:isPartOf <https://d-nb.info/1234567801> ;
+    dcterms:medium <http://rdaregistry.info/termList/RDACarrierType/1018> ;
+    lv:webPageArchived <https://example.org/> ;
+    bibo:issue "2012-05-18" ;
+    a lv:ArchivedWebPage ;
+    foaf:primaryTopic <https://example.org/> .
